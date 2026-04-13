@@ -1,0 +1,33 @@
+name: Mise à jour hebdomadaire des marges
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Chaque lundi à 9h UTC (10h Paris heure d'hiver, 11h été)
+  workflow_dispatch:      # Déclenchement manuel depuis l'onglet Actions
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install pandas requests openpyxl
+
+      - name: Mettre à jour les marges
+        run: python scripts/update_marges.py
+
+      - name: Commit et push si changements
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/marges_2022_2026.csv
+          git diff --cached --quiet || git commit -m "data: semaine du $(date +%Y-%m-%d)"
+          git push
