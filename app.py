@@ -363,7 +363,7 @@ Distribution = Prix TTC / 1,2 - Brent - Raffinage - TICPE
 La TVA de 20% est retirée en divisant le prix TTC par 1,2. La composante Distribution est le résidu : ce qui reste après avoir soustrait le coût du pétrole brut, la marge du raffineur et la TICPE.
 
 **Sources**
-- Prix pompe : prix-carburants.gouv.fr via donnees.roulez-eco.fr (actualisé toutes les 15 min)
+- Prix pompe : prix-carburants.gouv.fr via donnees.roulez-eco.fr (source actualisée toutes les 15 min, rechargée à chaque visite)
 - Brent : FRED, Federal Reserve Bank of St. Louis (hebdomadaire, en USD/baril)
 - Taux EUR/USD : Banque Centrale Européenne (quotidien)
 - Marge de raffinage : DGEC, ecologie.gouv.fr (mensuel, en €/tonne converti en €/litre)
