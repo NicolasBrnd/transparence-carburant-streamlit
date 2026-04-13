@@ -65,7 +65,13 @@ def load_historique():
         distribution=("marge_distribution", "mean"),
     ).reset_index()
     agg["tva"] = agg["prix"] - agg["prix"] / 1.2
-    return agg
+
+    df2 = pd.read_csv("data/marges_2022_2026.csv", parse_dates=["semaine"])
+
+    combined = pd.concat([agg, df2], ignore_index=True)
+    combined = combined.drop_duplicates(subset=["semaine", "carburant"], keep="last")
+    combined = combined.sort_values(["semaine", "carburant"]).reset_index(drop=True)
+    return combined
 
 
 @st.cache_data(ttl=3600)
@@ -293,7 +299,7 @@ st.divider()
 # ─── HISTORIQUE ──────────────────────────────────────────────────────────────
 
 st.subheader("Évolution depuis 2015")
-st.caption("Moyennes nationales, décomposition annuelle ou mois par mois. Données jusqu'en 2021.")
+st.caption("Moyennes nationales, décomposition annuelle ou mois par mois.")
 
 hist = load_historique()
 df_carb = hist[hist["carburant"] == carburant].copy()
