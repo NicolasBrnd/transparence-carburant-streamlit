@@ -18,7 +18,7 @@ from datetime import date
 st.set_page_config(
     page_title="Transparence Carburant",
     page_icon="⛽",
-    layout="wide",
+    layout="centered",
     menu_items={
         "Report a bug": "https://github.com/NicolasBrnd/transparence-carburant-streamlit/issues",
         "About": "Données publiques officielles — prix-carburants.gouv.fr · FRED · DGEC",
@@ -163,15 +163,10 @@ def fetch_prix_pompe():
 # CSS global : radio buttons → pills, supprime l'ancre des titres
 st.markdown("""
 <style>
-/* Largeur principale */
-.main .block-container,
-section.main > div.block-container {
+/* Élargit légèrement le mode centered natif de Streamlit */
+.block-container {
     max-width: 860px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
     padding-top: 2rem !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
 }
 
 /* Radio buttons as pills */
