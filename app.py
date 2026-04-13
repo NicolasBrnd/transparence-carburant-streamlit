@@ -146,7 +146,9 @@ def fetch_prix_pompe():
                 val = el.get("valeur", "")
                 if nom in prix and val:
                     try:
-                        p = float(val) / 1000
+                        p = float(val)
+                        if p > 10:
+                            p = p / 1000
                         if 0.8 <= p <= 4.0:
                             prix[nom].append(p)
                     except Exception:
