@@ -366,12 +366,12 @@ blocs = [
 
 blocs_html = "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:0.5rem'>"
 for b in blocs:
+    c, titre, sous, texte = b["color"], b["titre"], b["sous"], b["texte"]
     blocs_html += (
-        f"<div style='border:1px solid #e5e7eb;border-radius:14px;padding:16px;"
-        f"border-top:3px solid {b[\"color\"]}'>"
-        f"<p style='font-size:0.875rem;font-weight:600;color:#111827;margin:0'>{b['titre']}</p>"
-        f"<p style='font-size:0.75rem;color:#9ca3af;margin:2px 0 10px'>{b['sous']}</p>"
-        f"<p style='font-size:0.875rem;color:#374151;line-height:1.55;margin:0'>{b['texte']}</p>"
+        f"<div style='border:1px solid #e5e7eb;border-radius:14px;padding:16px;border-top:3px solid {c}'>"
+        f"<p style='font-size:0.875rem;font-weight:600;color:#111827;margin:0'>{titre}</p>"
+        f"<p style='font-size:0.75rem;color:#9ca3af;margin:2px 0 10px'>{sous}</p>"
+        f"<p style='font-size:0.875rem;color:#374151;line-height:1.55;margin:0'>{texte}</p>"
         f"</div>"
     )
 blocs_html += "</div>"
