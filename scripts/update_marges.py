@@ -31,7 +31,10 @@ DGEC_URL = (
     "Historique%20de%20la%20marge%20brute%20de%20raffinage%20sur%20Brent%20depuis%202015"
     "%20%28moyennes%20mensuelles%29.xlsx"
 )
-PRIX_URL = "https://donnees.roulez-eco.fr/opendata/instantane"
+PRIX_URL     = "https://donnees.roulez-eco.fr/opendata/instantane"
+PRIX_GOV_URL = "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json?limit=-1&timezone=Europe%2FParis"
+
+HEADERS = {"User-Agent": "data-carburant-bot/1.0 (https://github.com/NicolasBrnd/transparence-carburant-streamlit)"}
 
 CSV_PATH = Path(__file__).parent.parent / "data" / "marges_2022_2026.csv"
 
@@ -42,22 +45,17 @@ def get_semaine() -> date:
     return today - timedelta(days=today.weekday())
 
 
-def fetch_prix_pompe() -> dict:
-    r = requests.get(PRIX_URL, timeout=90, stream=True)
-    r.raise_for_status()
-    content = b""
-    for chunk in r.iter_content(chunk_size=256 * 1024):
-        content += chunk
-        if len(content) > 20 * 1024 * 1024:
-            break
+def _parse_zip_xml(content: bytes) -> dict:
     with zipfile.ZipFile(io.BytesIO(content)) as z:
         with z.open(z.namelist()[0]) as f:
             tree = ET.parse(f)
     root = tree.getroot()
     prix = {"Gazole": [], "SP95-E10": [], "SP98": []}
+    n_stations = 0
     for station in root.findall("pdv"):
         if station.get("type") == "A":
             continue
+        n_stations += 1
         for el in station.findall("prix"):
             nom = el.get("nom", "")
             val = el.get("valeur", "")
@@ -68,7 +66,55 @@ def fetch_prix_pompe() -> dict:
                         prix[nom].append(p)
                 except Exception:
                     pass
+    print(f"  {n_stations} stations analysées")
     return {k: round(sum(v) / len(v), 6) for k, v in prix.items() if v}
+
+
+def _fetch_via_gov_api() -> dict:
+    """Fallback : API REST officielle data.economie.gouv.fr."""
+    print("  Utilisation de l'API gouvernement (fallback)...")
+    r = requests.get(PRIX_GOV_URL, timeout=60, headers=HEADERS)
+    r.raise_for_status()
+    records = r.json()
+    mapping = {
+        "Gazole":   "gazole_prix",
+        "SP95-E10": "e10_prix",
+        "SP98":     "sp98_prix",
+    }
+    prix = {"Gazole": [], "SP95-E10": [], "SP98": []}
+    for rec in records:
+        if rec.get("type_de_vente") == "A":
+            continue
+        for carb, field in mapping.items():
+            val = rec.get(field)
+            if val is not None:
+                try:
+                    p = float(val)
+                    if 0.8 <= p <= 4.0:
+                        prix[carb].append(p)
+                except Exception:
+                    pass
+    print(f"  {len(records)} stations via API gouvernement")
+    return {k: round(sum(v) / len(v), 6) for k, v in prix.items() if v}
+
+
+def fetch_prix_pompe() -> dict:
+    try:
+        r = requests.get(PRIX_URL, timeout=90, stream=True, headers=HEADERS)
+        r.raise_for_status()
+        content = b""
+        for chunk in r.iter_content(chunk_size=256 * 1024):
+            content += chunk
+            if len(content) > 20 * 1024 * 1024:
+                break
+        result = _parse_zip_xml(content)
+        if result:
+            return result
+        print("  roulez-eco.fr: aucun prix trouvé dans le ZIP")
+    except Exception as e:
+        print(f"  roulez-eco.fr indisponible: {e}")
+
+    return _fetch_via_gov_api()
 
 
 def fetch_brent_eur_litre() -> float:
@@ -162,8 +208,8 @@ def main():
         })
 
     if not nouvelles_lignes:
-        print("Aucune ligne à ajouter.")
-        sys.exit(1)
+        print("Aucune ligne à ajouter — prix pompe indisponibles, semaine ignorée.")
+        sys.exit(0)
 
     df_new = pd.DataFrame(nouvelles_lignes)
     df_updated = pd.concat([df, df_new], ignore_index=True)
