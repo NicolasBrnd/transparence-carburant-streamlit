@@ -163,13 +163,15 @@ def fetch_prix_pompe():
 # CSS global : radio buttons → pills, supprime l'ancre des titres
 st.markdown("""
 <style>
-/* Largeur principale — équivalent max-w-5xl Next.js */
-.main .block-container {
-    max-width: 860px;
-    margin: 0 auto;
-    padding-top: 2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
+/* Largeur principale */
+.main .block-container,
+section.main > div.block-container {
+    max-width: 860px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-top: 2rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
 }
 
 /* Radio buttons as pills */
