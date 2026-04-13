@@ -38,7 +38,7 @@ TICPE = {
 
 COULEURS = {
     "Pétrole brut": "#f59e0b",
-    "Raffinage":    "#f97316",
+    "Raffinage":    "#ef4444",
     "Distribution": "#3b82f6",
     "Taxes":        "#1e293b",
 }
