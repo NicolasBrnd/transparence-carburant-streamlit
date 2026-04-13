@@ -35,7 +35,7 @@ PRIX_URL     = "https://donnees.roulez-eco.fr/opendata/instantane"
 PRIX_GOV_URL = (
     "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
     "prix-des-carburants-en-france-flux-instantane-v2/records"
-    "?limit=5"
+    "?limit=200"
 )
 
 HEADERS = {"User-Agent": "data-carburant-bot/1.0 (https://github.com/NicolasBrnd/transparence-carburant-streamlit)"}
@@ -81,7 +81,10 @@ def _parse_zip_xml(content: bytes) -> dict:
             cle = NOM_MAP.get(nom)
             if cle and val:
                 try:
-                    p = float(val) / 1000
+                    p = float(val)
+                    # Gère les deux formats : millièmes (1604) et €/L (1.604)
+                    if p > 10:
+                        p = p / 1000
                     if 0.8 <= p <= 4.0:
                         prix[cle].append(p)
                 except Exception:
@@ -104,11 +107,25 @@ def _fetch_via_gov_api() -> dict:
     r.raise_for_status()
     records = r.json().get("results", [])
     print(f"  {len(records)} enregistrements reçus")
-    if records:
-        print(f"  Champs disponibles: {list(records[0].keys())}")
-        print(f"  Exemple de record: {records[0]}")
-    # Résultat vide pour cette passe de diagnostic — on lèvera une erreur explicite
-    raise ValueError("Diagnostic gov API — voir les champs ci-dessus, relancer après correction")
+
+    gazole, e10, sp98 = [], [], []
+    for rec in records:
+        for lst, key in [(gazole, "gazole_prix"), (e10, "e10_prix"), (sp98, "sp98_prix")]:
+            val = rec.get(key)
+            if val is not None:
+                try:
+                    p = float(val)
+                    if 0.8 <= p <= 4.0:
+                        lst.append(p)
+                except Exception:
+                    pass
+
+    prix = {}
+    if gazole:   prix["Gazole"]   = round(sum(gazole) / len(gazole), 6)
+    if e10:      prix["SP95-E10"] = round(sum(e10)    / len(e10),    6)
+    if sp98:     prix["SP98"]     = round(sum(sp98)   / len(sp98),   6)
+    print(f"  Prix gov API: {prix}")
+    return prix
 
 
 def fetch_prix_pompe() -> dict:
