@@ -163,13 +163,21 @@ def fetch_prix_pompe():
 # CSS global : radio buttons → pills, supprime l'ancre des titres
 st.markdown("""
 <style>
+/* Largeur principale */
+.main .block-container { max-width: 920px; padding-top: 2rem; }
+
+/* Radio buttons as pills */
 div[role="radiogroup"] { display:flex; flex-direction:row; gap:6px; flex-wrap:wrap; }
 div[role="radiogroup"] label {
     background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px;
     padding:5px 14px; cursor:pointer; font-size:0.85rem; font-weight:500; color:#374151;
 }
 div[role="radiogroup"] label:has(input:checked) {
-    background:#111827; color:white; border-color:#111827;
+    background:#111827 !important; border-color:#111827 !important;
+}
+div[role="radiogroup"] label:has(input:checked),
+div[role="radiogroup"] label:has(input:checked) * {
+    color: white !important;
 }
 div[role="radiogroup"] input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
 </style>
