@@ -165,7 +165,7 @@ st.markdown("""
 <style>
 /* Largeur principale — équivalent max-w-5xl Next.js */
 .main .block-container {
-    max-width: 1100px;
+    max-width: 860px;
     margin: 0 auto;
     padding-top: 2rem;
     padding-left: 2rem;
