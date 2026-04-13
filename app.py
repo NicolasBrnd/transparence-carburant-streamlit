@@ -427,10 +427,31 @@ else:
     x = rows["mois"]
 
 fig = go.Figure()
-fig.add_trace(go.Bar(x=x, y=rows["brent"],       name="Pétrole brut", marker_color=COULEURS["Pétrole brut"]))
-fig.add_trace(go.Bar(x=x, y=rows["raffinage"],   name="Raffinage",    marker_color=COULEURS["Raffinage"]))
-fig.add_trace(go.Bar(x=x, y=rows["distribution"],name="Distribution", marker_color=COULEURS["Distribution"]))
-fig.add_trace(go.Bar(x=x, y=rows["tva"] + rows["ticpe"], name="Taxes", marker_color=COULEURS["Taxes"]))
+
+if vue == "Par mois":
+    # Aires empilées pour la vue mensuelle (130+ points, barres illisibles)
+    composantes_hist = [
+        ("Pétrole brut", rows["brent"],                  COULEURS["Pétrole brut"]),
+        ("Raffinage",    rows["raffinage"],               COULEURS["Raffinage"]),
+        ("Distribution", rows["distribution"],            COULEURS["Distribution"]),
+        ("Taxes",        rows["tva"] + rows["ticpe"],     COULEURS["Taxes"]),
+    ]
+    for nom, valeurs, couleur in composantes_hist:
+        fig.add_trace(go.Scatter(
+            x=x, y=valeurs,
+            name=nom,
+            stackgroup="prix",
+            fillcolor=couleur,
+            line=dict(color=couleur, width=0.5),
+            mode="lines",
+            hovertemplate=f"<b>{nom}</b><br>%{{x}}<br>%{{y:.3f}} €/L<extra></extra>",
+        ))
+else:
+    # Barres empilées pour la vue annuelle (lisible avec ~11 barres)
+    fig.add_trace(go.Bar(x=x, y=rows["brent"],                  name="Pétrole brut", marker_color=COULEURS["Pétrole brut"]))
+    fig.add_trace(go.Bar(x=x, y=rows["raffinage"],               name="Raffinage",    marker_color=COULEURS["Raffinage"]))
+    fig.add_trace(go.Bar(x=x, y=rows["distribution"],            name="Distribution", marker_color=COULEURS["Distribution"]))
+    fig.add_trace(go.Bar(x=x, y=rows["tva"] + rows["ticpe"],     name="Taxes",        marker_color=COULEURS["Taxes"]))
 
 fig.update_layout(
     barmode="stack",
