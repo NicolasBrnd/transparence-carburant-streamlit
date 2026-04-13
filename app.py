@@ -171,7 +171,7 @@ div[role="radiogroup"] label {
 div[role="radiogroup"] label:has(input:checked) {
     background:#111827; color:white; border-color:#111827;
 }
-div[role="radiogroup"] input[type="radio"] { display:none; }
+div[role="radiogroup"] input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -199,7 +199,7 @@ st.divider()
 
 # ─── PRIX ACTUEL ─────────────────────────────────────────────────────────────
 
-st.subheader("Prix actuel")
+st.markdown("<div style='font-size:1.4rem;font-weight:600;margin:0.5rem 0'>Prix actuel</div>", unsafe_allow_html=True)
 
 with st.spinner("Chargement des données en temps réel..."):
     prix_pompe   = fetch_prix_pompe()
@@ -316,24 +316,27 @@ st.divider()
 
 # ─── QUI PREND QUOI ──────────────────────────────────────────────────────────
 
-st.subheader("Qui prend quoi ?")
+st.markdown("<div style='font-size:1.4rem;font-weight:600;margin:0.5rem 0'>Qui prend quoi ?</div>", unsafe_allow_html=True)
 st.caption("Derrière chaque litre, quatre acteurs aux logiques très différentes.")
+
+_brent_info = f" · {brent_usd:.0f} $/baril" if brent_usd else ""
+_taux_info  = f" (actuellement 1 $ = {taux:.4f} €)" if taux else ""
+_ticpe_str  = f"{ticpe:.4f}" if ticpe else "0.5974"
 
 blocs = [
     {
         "titre": "Pétrole brut (Brent)",
-        "sous": f"Marchés mondiaux · OPEP{f' · {brent_usd:.0f} $/baril' if brent_usd else ''}",
+        "sous":  f"Marchés mondiaux · OPEP{_brent_info}",
         "color": COULEURS["Pétrole brut"],
         "texte": (
             f"La composante la plus volatile. Son prix dépend du cours mondial du brut "
-            f"et du taux de change €/$"
-            f"{f' (actuellement 1 $ = {taux:.4f} €)' if taux else ''}. "
+            f"et du taux de change €/${_taux_info}. "
             f"Quand le dollar monte, le pétrole coûte plus cher en euros même si son prix en dollars ne change pas."
         ),
     },
     {
         "titre": "Raffinage",
-        "sous": "Raffineurs (TotalEnergies, Esso...) · DGEC",
+        "sous":  "Raffineurs (TotalEnergies, Esso...) · DGEC",
         "color": COULEURS["Raffinage"],
         "texte": (
             "Marge du raffineur pour transformer le brut en carburant utilisable. "
@@ -343,7 +346,7 @@ blocs = [
     },
     {
         "titre": "Distribution",
-        "sous": "Transport, logistique, station, marge nette · prix libres",
+        "sous":  "Transport, logistique, station, marge nette · prix libres",
         "color": COULEURS["Distribution"],
         "texte": (
             "Agrège tout ce qui n'est pas mesuré séparément : transport raffinerie-dépôt-station, "
@@ -354,11 +357,10 @@ blocs = [
     },
     {
         "titre": "État (TVA + TICPE)",
-        "sous": "Fixé par la loi · Journal Officiel",
+        "sous":  "Fixé par la loi · Journal Officiel",
         "color": COULEURS["Taxes"],
         "texte": (
-            f"La TICPE est fixe par litre "
-            f"({'~' if not ticpe else ''}{ticpe:.4f if ticpe else '0.5974'} €/L), "
+            f"La TICPE est fixe par litre ({_ticpe_str} €/L), "
             f"votée au Parlement. La TVA de 20% s'applique sur le tout, y compris sur la TICPE elle-même."
         ),
     },
@@ -381,7 +383,7 @@ st.divider()
 
 # ─── HISTORIQUE ──────────────────────────────────────────────────────────────
 
-st.subheader("Évolution depuis 2015")
+st.markdown("<div style='font-size:1.4rem;font-weight:600;margin:0.5rem 0'>Évolution depuis 2015</div>", unsafe_allow_html=True)
 st.caption("Moyennes nationales, décomposition annuelle ou mois par mois.")
 
 hist = load_historique()
