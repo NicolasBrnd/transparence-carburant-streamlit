@@ -429,7 +429,7 @@ else:
 fig = go.Figure()
 
 if vue == "Par mois":
-    # Aires empilées pour la vue mensuelle (130+ points, barres illisibles)
+    # Courbes pour la vue mensuelle — tendances par composante
     composantes_hist = [
         ("Pétrole brut", rows["brent"],                  COULEURS["Pétrole brut"]),
         ("Raffinage",    rows["raffinage"],               COULEURS["Raffinage"]),
@@ -440,10 +440,8 @@ if vue == "Par mois":
         fig.add_trace(go.Scatter(
             x=x, y=valeurs,
             name=nom,
-            stackgroup="prix",
-            fillcolor=couleur,
-            line=dict(color=couleur, width=0.5),
             mode="lines",
+            line=dict(color=couleur, width=2),
             hovertemplate=f"<b>{nom}</b><br>%{{x}}<br>%{{y:.3f}} €/L<extra></extra>",
         ))
 else:
