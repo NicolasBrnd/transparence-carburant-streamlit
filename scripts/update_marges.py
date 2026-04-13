@@ -32,7 +32,13 @@ DGEC_URL = (
     "%20%28moyennes%20mensuelles%29.xlsx"
 )
 PRIX_URL     = "https://donnees.roulez-eco.fr/opendata/instantane"
-PRIX_GOV_URL = "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json?limit=-1&timezone=Europe%2FParis"
+PRIX_GOV_URL = (
+    "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
+    "prix-des-carburants-en-france-flux-instantane-v2/records"
+    "?select=avg(gazole_prix)+as+gazole,avg(e10_prix)+as+e10,avg(sp98_prix)+as+sp98"
+    "&where=type_de_vente+!%3D+'A'"
+    "&limit=1"
+)
 
 HEADERS = {"User-Agent": "data-carburant-bot/1.0 (https://github.com/NicolasBrnd/transparence-carburant-streamlit)"}
 
@@ -71,31 +77,23 @@ def _parse_zip_xml(content: bytes) -> dict:
 
 
 def _fetch_via_gov_api() -> dict:
-    """Fallback : API REST officielle data.economie.gouv.fr."""
+    """Fallback : API officielle avec agrégation côté serveur (1 seule requête)."""
     print("  Utilisation de l'API gouvernement (fallback)...")
-    r = requests.get(PRIX_GOV_URL, timeout=60, headers=HEADERS)
+    r = requests.get(PRIX_GOV_URL, timeout=30, headers=HEADERS)
     r.raise_for_status()
-    records = r.json()
-    mapping = {
-        "Gazole":   "gazole_prix",
-        "SP95-E10": "e10_prix",
-        "SP98":     "sp98_prix",
-    }
-    prix = {"Gazole": [], "SP95-E10": [], "SP98": []}
-    for rec in records:
-        if rec.get("type_de_vente") == "A":
-            continue
-        for carb, field in mapping.items():
-            val = rec.get(field)
-            if val is not None:
-                try:
-                    p = float(val)
-                    if 0.8 <= p <= 4.0:
-                        prix[carb].append(p)
-                except Exception:
-                    pass
-    print(f"  {len(records)} stations via API gouvernement")
-    return {k: round(sum(v) / len(v), 6) for k, v in prix.items() if v}
+    results = r.json().get("results", [])
+    if not results:
+        raise ValueError("API gouvernement: aucun résultat")
+    rec = results[0]
+    print(f"  Résultat brut: {rec}")
+    prix = {}
+    for carb, key in [("Gazole", "gazole"), ("SP95-E10", "e10"), ("SP98", "sp98")]:
+        val = rec.get(key)
+        if val is not None:
+            p = float(val)
+            if 0.8 <= p <= 4.0:
+                prix[carb] = round(p, 6)
+    return prix
 
 
 def fetch_prix_pompe() -> dict:
