@@ -377,7 +377,7 @@ blocs = [
     },
 ]
 
-blocs_html = "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:0.5rem'>"
+blocs_html = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:0.5rem'>"
 for b in blocs:
     c, titre, sous, texte = b["color"], b["titre"], b["sous"], b["texte"]
     blocs_html += (
