@@ -178,7 +178,18 @@ with st.spinner("Chargement des données en temps réel..."):
     brent, brent_usd, taux = fetch_brent_eurusd()
     raffinage    = fetch_dgec_raffinage()
 
+# Fallback sur la dernière semaine du CSV si les APIs sont indisponibles
 prix = prix_pompe.get(carburant, 0)
+if prix == 0 or brent is None:
+    hist_fb = load_historique()
+    last = hist_fb[hist_fb["carburant"] == carburant].sort_values("semaine").iloc[-1]
+    prix     = prix     if prix > 0    else float(last["prix"])
+    brent    = brent    if brent       else float(last["brent"])
+    raffinage= raffinage if raffinage  else float(last["raffinage"])
+    brent_usd, taux = None, None
+    _fallback = True
+else:
+    _fallback = False
 
 if prix > 0 and brent:
     annee = date.today().year
@@ -210,6 +221,9 @@ if prix > 0 and brent:
                 f"Brent FRED · {brent_usd:.0f} $/baril<br>1 $ = {taux:.4f} €</p>",
                 unsafe_allow_html=True,
             )
+
+    if _fallback:
+        st.caption("Données en temps réel indisponibles. Dernière semaine du CSV affichée.")
 
     # Barre de décomposition
     fig_bar = go.Figure()
@@ -265,7 +279,7 @@ if prix > 0 and brent:
         unsafe_allow_html=True,
     )
 else:
-    st.warning("Données en temps réel indisponibles.")
+    st.info("Données en temps réel indisponibles — affichage de la dernière semaine disponible.")
 
 st.divider()
 
