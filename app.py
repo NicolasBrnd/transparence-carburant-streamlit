@@ -137,6 +137,11 @@ def fetch_prix_pompe():
             with z.open(z.namelist()[0]) as f:
                 tree = ET.parse(f)
         root = tree.getroot()
+        NOM_MAP = {
+            "Gazole": "Gazole", "gazole": "Gazole",
+            "SP95-E10": "SP95-E10", "E10": "SP95-E10", "e10": "SP95-E10",
+            "SP98": "SP98", "sp98": "SP98",
+        }
         prix = {"Gazole": [], "SP95-E10": [], "SP98": []}
         for station in root.findall("pdv"):
             if station.get("type") == "A":
@@ -144,13 +149,14 @@ def fetch_prix_pompe():
             for el in station.findall("prix"):
                 nom = el.get("nom", "")
                 val = el.get("valeur", "")
-                if nom in prix and val:
+                cle = NOM_MAP.get(nom)
+                if cle and val:
                     try:
                         p = float(val)
                         if p > 10:
                             p = p / 1000
                         if 0.8 <= p <= 4.0:
-                            prix[nom].append(p)
+                            prix[cle].append(p)
                     except Exception:
                         pass
         return {k: round(sum(v) / len(v), 4) for k, v in prix.items() if v}
