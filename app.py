@@ -357,19 +357,21 @@ with st.expander("Méthode de calcul"):
 **Formule**
 
 ```
-Marge = Prix TTC / (1 + TVA) - Brent - Marge raffinage - TICPE
+Distribution = Prix TTC / 1,2 - Brent - Raffinage - TICPE
 ```
 
+La TVA de 20% est retirée en divisant le prix TTC par 1,2. La composante Distribution est le résidu : ce qui reste après avoir soustrait le coût du pétrole brut, la marge du raffineur et la TICPE.
+
 **Sources**
-- Prix pompe : prix-carburants.gouv.fr via donnees.roulez-eco.fr (toutes les 15 min)
-- Brent : FRED — Federal Reserve Bank of St. Louis (hebdomadaire)
+- Prix pompe : prix-carburants.gouv.fr via donnees.roulez-eco.fr (actualisé toutes les 15 min)
+- Brent : FRED, Federal Reserve Bank of St. Louis (hebdomadaire, en USD/baril)
 - Taux EUR/USD : Banque Centrale Européenne (quotidien)
-- Marge de raffinage : DGEC — ecologie.gouv.fr (mensuel)
-- TICPE : Journal Officiel (fixe)
+- Marge de raffinage : DGEC, ecologie.gouv.fr (mensuel, en €/tonne converti en €/litre)
+- TICPE : Journal Officiel (fixe depuis 2020)
 
 **Limites**
 
-La composante Distribution est un résidu calculé. Elle inclut transport, logistique, exploitation de la station et absorbe les imprécisions du modèle. Elle ne représente pas la marge nette du distributeur.
+La composante Distribution est un résidu calculé, pas une mesure directe. Elle inclut transport, logistique, exploitation de la station et absorbe les imprécisions du modèle. Elle ne représente pas la marge nette du distributeur.
     """)
 
 st.markdown(
