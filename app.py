@@ -160,10 +160,25 @@ def fetch_prix_pompe():
 
 # ─── APP ─────────────────────────────────────────────────────────────────────
 
-# Header
+# CSS global : radio buttons → pills, supprime l'ancre des titres
+st.markdown("""
+<style>
+div[role="radiogroup"] { display:flex; flex-direction:row; gap:6px; flex-wrap:wrap; }
+div[role="radiogroup"] label {
+    background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px;
+    padding:5px 14px; cursor:pointer; font-size:0.85rem; font-weight:500; color:#374151;
+}
+div[role="radiogroup"] label:has(input:checked) {
+    background:#111827; color:white; border-color:#111827;
+}
+div[role="radiogroup"] input[type="radio"] { display:none; }
+</style>
+""", unsafe_allow_html=True)
+
+# Header — <div> au lieu de <h1> pour éviter l'ancre Streamlit
 st.markdown(
-    "<h1 style='font-size:2rem;font-weight:700;margin-bottom:0.25rem'>"
-    "Le prix du carburant, composante par composante.</h1>",
+    "<div style='font-size:2rem;font-weight:700;margin-bottom:0.25rem;line-height:1.2'>"
+    "Le prix du carburant, composante par composante.</div>",
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -224,9 +239,9 @@ if prix > 0 and brent:
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown(
-            f"<p style='font-size:1rem;font-weight:600;margin:0'>1 litre de {carburant}</p>"
-            f"<p style='font-size:2rem;font-weight:700;margin:0'>{prix:.3f} €</p>"
-            f"<p style='font-size:0.75rem;color:#9ca3af;margin:0'>Moyenne nationale</p>",
+            f"<p style='font-size:0.8rem;color:#9ca3af;margin:0'>1 litre de {carburant} · Moyenne nationale</p>"
+            f"<p style='font-size:2.2rem;font-weight:700;margin:0;line-height:1.1'>"
+            f"{prix:.3f} <span style='font-size:1rem;font-weight:400;color:#6b7280'>€</span></p>",
             unsafe_allow_html=True,
         )
     with col2:
@@ -249,10 +264,10 @@ if prix > 0 and brent:
             orientation="h",
             name=label,
             marker_color=COULEURS[label],
-            text=f"{pct:.0f}%",
+            text=f"{val:.3f}€" if pct > 12 else (f"{pct:.0f}%" if pct > 6 else ""),
             textposition="inside",
             insidetextanchor="middle",
-            hovertemplate=f"<b>{label}</b><br>{val:.3f} €/L — {pct:.1f}%<extra></extra>",
+            hovertemplate=f"<b>{label}</b><br>{val:.3f} €/L · {pct:.1f}%<extra></extra>",
         ))
     fig_bar.update_layout(
         barmode="stack",
@@ -266,26 +281,27 @@ if prix > 0 and brent:
     )
     st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
-    # Cards
-    cols = st.columns(4)
-    for i, (label, val) in enumerate(composantes.items()):
-        with cols[i]:
-            pct = val / total * 100
-            detail = {
-                "Pétrole brut": "Cours Brent",
-                "Raffinage":    "Marge raffineur",
-                "Distribution": "Logistique + station",
-                "Taxes":        "TVA 20% + TICPE",
-            }[label]
-            st.markdown(
-                f"<div style='border:1px solid #e5e7eb;border-radius:12px;padding:12px;"
-                f"border-top:3px solid {COULEURS[label]}'>"
-                f"<p style='font-size:0.75rem;font-weight:600;color:#374151;margin:0'>{label}</p>"
-                f"<p style='font-size:1.25rem;font-weight:700;margin:4px 0'>{val:.3f} <span style='font-size:0.8rem;font-weight:400;color:#6b7280'>€/L</span></p>"
-                f"<p style='font-size:0.7rem;color:#9ca3af;margin:0'>{pct:.0f}% · {detail}</p>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
+    # Cards — grille responsive (4 colonnes desktop, 2x2 mobile)
+    details = {
+        "Pétrole brut": "Cours Brent",
+        "Raffinage":    "Marge raffineur",
+        "Distribution": "Logistique + station",
+        "Taxes":        "TVA 20% + TICPE",
+    }
+    cards_html = "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:0.25rem'>"
+    for label, val in composantes.items():
+        pct = val / total * 100
+        cards_html += (
+            f"<div style='border:1px solid #e5e7eb;border-radius:12px;padding:12px;"
+            f"border-top:3px solid {COULEURS[label]}'>"
+            f"<p style='font-size:0.75rem;font-weight:600;color:#374151;margin:0'>{label}</p>"
+            f"<p style='font-size:1.2rem;font-weight:700;margin:4px 0'>{val:.3f}"
+            f"<span style='font-size:0.78rem;font-weight:400;color:#6b7280'> €/L</span></p>"
+            f"<p style='font-size:0.7rem;color:#9ca3af;margin:0'>{pct:.0f}% · {details[label]}</p>"
+            f"</div>"
+        )
+    cards_html += "</div>"
+    st.markdown(cards_html, unsafe_allow_html=True)
 
     st.markdown(
         "<p style='font-size:0.7rem;color:#9ca3af;margin-top:0.75rem'>"
@@ -306,7 +322,7 @@ st.caption("Moyennes nationales, décomposition annuelle ou mois par mois.")
 hist = load_historique()
 df_carb = hist[hist["carburant"] == carburant].copy()
 
-vue = st.radio("Vue", ["Par année", "Par mois"], horizontal=True, label_visibility="collapsed")
+vue = st.radio("Vue", ["Par année", "Par mois"], index=1, horizontal=True, label_visibility="collapsed")
 
 if vue == "Par année":
     df_carb["annee"] = df_carb["semaine"].dt.year
