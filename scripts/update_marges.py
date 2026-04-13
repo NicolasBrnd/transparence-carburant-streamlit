@@ -35,9 +35,8 @@ PRIX_URL     = "https://donnees.roulez-eco.fr/opendata/instantane"
 PRIX_GOV_URL = (
     "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
     "prix-des-carburants-en-france-flux-instantane-v2/records"
-    "?select=avg(gazole_prix)+as+gazole,avg(e10_prix)+as+e10,avg(sp98_prix)+as+sp98"
-    "&where=type_de_vente+!%3D+'A'"
-    "&limit=1"
+    "?select=gazole_prix,e10_prix,sp98_prix,type_de_vente"
+    "&limit=100"
 )
 
 HEADERS = {"User-Agent": "data-carburant-bot/1.0 (https://github.com/NicolasBrnd/transparence-carburant-streamlit)"}
@@ -56,8 +55,22 @@ def _parse_zip_xml(content: bytes) -> dict:
         with z.open(z.namelist()[0]) as f:
             tree = ET.parse(f)
     root = tree.getroot()
+
+    # Normalisation : plusieurs sources utilisent des noms différents
+    NOM_MAP = {
+        "Gazole":   "Gazole",
+        "gazole":   "Gazole",
+        "SP95-E10": "SP95-E10",
+        "E10":      "SP95-E10",
+        "e10":      "SP95-E10",
+        "SP98":     "SP98",
+        "sp98":     "SP98",
+    }
+
     prix = {"Gazole": [], "SP95-E10": [], "SP98": []}
+    noms_bruts: set = set()
     n_stations = 0
+
     for station in root.findall("pdv"):
         if station.get("type") == "A":
             continue
@@ -65,34 +78,48 @@ def _parse_zip_xml(content: bytes) -> dict:
         for el in station.findall("prix"):
             nom = el.get("nom", "")
             val = el.get("valeur", "")
-            if nom in prix and val:
+            noms_bruts.add(nom)
+            cle = NOM_MAP.get(nom)
+            if cle and val:
                 try:
                     p = float(val) / 1000
                     if 0.8 <= p <= 4.0:
-                        prix[nom].append(p)
+                        prix[cle].append(p)
                 except Exception:
                     pass
-    print(f"  {n_stations} stations analysées")
+
+    print(f"  {n_stations} stations, noms trouvés: {sorted(noms_bruts)}")
     return {k: round(sum(v) / len(v), 6) for k, v in prix.items() if v}
 
 
 def _fetch_via_gov_api() -> dict:
-    """Fallback : API officielle avec agrégation côté serveur (1 seule requête)."""
+    """Fallback : API officielle, 100 records, moyenne en Python."""
     print("  Utilisation de l'API gouvernement (fallback)...")
     r = requests.get(PRIX_GOV_URL, timeout=30, headers=HEADERS)
     r.raise_for_status()
-    results = r.json().get("results", [])
-    if not results:
-        raise ValueError("API gouvernement: aucun résultat")
-    rec = results[0]
-    print(f"  Résultat brut: {rec}")
+    records = r.json().get("results", [])
+    print(f"  {len(records)} enregistrements reçus")
+    if records:
+        print(f"  Exemple de record: {records[0]}")
+
+    gazole, e10, sp98 = [], [], []
+    for rec in records:
+        if rec.get("type_de_vente") == "A":
+            continue
+        for lst, key in [(gazole, "gazole_prix"), (e10, "e10_prix"), (sp98, "sp98_prix")]:
+            val = rec.get(key)
+            if val is not None:
+                try:
+                    p = float(val)
+                    if 0.8 <= p <= 4.0:
+                        lst.append(p)
+                except Exception:
+                    pass
+
     prix = {}
-    for carb, key in [("Gazole", "gazole"), ("SP95-E10", "e10"), ("SP98", "sp98")]:
-        val = rec.get(key)
-        if val is not None:
-            p = float(val)
-            if 0.8 <= p <= 4.0:
-                prix[carb] = round(p, 6)
+    if gazole:   prix["Gazole"]   = round(sum(gazole) / len(gazole), 6)
+    if e10:      prix["SP95-E10"] = round(sum(e10)    / len(e10),    6)
+    if sp98:     prix["SP98"]     = round(sum(sp98)   / len(sp98),   6)
     return prix
 
 
