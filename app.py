@@ -121,8 +121,13 @@ def fetch_dgec_raffinage():
 @st.cache_data(ttl=900)
 def fetch_prix_pompe():
     try:
-        r = requests.get(PRIX_URL, timeout=60)
-        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        r = requests.get(PRIX_URL, timeout=90, stream=True)
+        content = b""
+        for chunk in r.iter_content(chunk_size=1024 * 256):
+            content += chunk
+            if len(content) > 20 * 1024 * 1024:
+                break
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
             with z.open(z.namelist()[0]) as f:
                 tree = ET.parse(f)
         root = tree.getroot()
@@ -180,13 +185,15 @@ with st.spinner("Chargement des données en temps réel..."):
 
 # Fallback sur la dernière semaine du CSV si les APIs sont indisponibles
 prix = prix_pompe.get(carburant, 0)
+_distribution_csv = None
 if prix == 0 or brent is None:
     hist_fb = load_historique()
     last = hist_fb[hist_fb["carburant"] == carburant].sort_values("semaine").iloc[-1]
-    prix     = prix     if prix > 0    else float(last["prix"])
-    brent    = brent    if brent       else float(last["brent"])
-    raffinage= raffinage if raffinage  else float(last["raffinage"])
-    brent_usd, taux = None, None
+    prix              = float(last["prix"])
+    brent             = float(last["brent"])
+    raffinage         = float(last["raffinage"])
+    _distribution_csv = float(last["distribution"])
+    brent_usd, taux   = None, None
     _fallback = True
 else:
     _fallback = False
@@ -195,7 +202,7 @@ if prix > 0 and brent:
     annee = date.today().year
     ticpe = TICPE.get(carburant, {}).get(annee, TICPE.get(carburant, {}).get(2020, 0.6))
     tva   = prix - prix / 1.2
-    distribution = max(prix / 1.2 - brent - raffinage - ticpe, 0)
+    distribution = _distribution_csv if _distribution_csv is not None else max(prix / 1.2 - brent - raffinage - ticpe, 0)
 
     composantes = {
         "Pétrole brut": brent,
