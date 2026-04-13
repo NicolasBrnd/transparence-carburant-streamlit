@@ -314,6 +314,71 @@ else:
 
 st.divider()
 
+# ─── QUI PREND QUOI ──────────────────────────────────────────────────────────
+
+st.subheader("Qui prend quoi ?")
+st.caption("Derrière chaque litre, quatre acteurs aux logiques très différentes.")
+
+blocs = [
+    {
+        "titre": "Pétrole brut (Brent)",
+        "sous": f"Marchés mondiaux · OPEP{f' · {brent_usd:.0f} $/baril' if brent_usd else ''}",
+        "color": COULEURS["Pétrole brut"],
+        "texte": (
+            f"La composante la plus volatile. Son prix dépend du cours mondial du brut "
+            f"et du taux de change €/$"
+            f"{f' (actuellement 1 $ = {taux:.4f} €)' if taux else ''}. "
+            f"Quand le dollar monte, le pétrole coûte plus cher en euros même si son prix en dollars ne change pas."
+        ),
+    },
+    {
+        "titre": "Raffinage",
+        "sous": "Raffineurs (TotalEnergies, Esso...) · DGEC",
+        "color": COULEURS["Raffinage"],
+        "texte": (
+            "Marge du raffineur pour transformer le brut en carburant utilisable. "
+            "Actuellement très faible, signe de surcapacité mondiale. "
+            "Cette marge peut être négative en période de crise."
+        ),
+    },
+    {
+        "titre": "Distribution",
+        "sous": "Transport, logistique, station, marge nette · prix libres",
+        "color": COULEURS["Distribution"],
+        "texte": (
+            "Agrège tout ce qui n'est pas mesuré séparément : transport raffinerie-dépôt-station, "
+            "stockage, coûts d'exploitation de la station (loyer, personnel, énergie), "
+            "incorporation biocarburant, et la marge nette du distributeur. "
+            "La marge nette ne représente qu'une partie de ce total."
+        ),
+    },
+    {
+        "titre": "État (TVA + TICPE)",
+        "sous": "Fixé par la loi · Journal Officiel",
+        "color": COULEURS["Taxes"],
+        "texte": (
+            f"La TICPE est fixe par litre "
+            f"({'~' if not ticpe else ''}{ticpe:.4f if ticpe else '0.5974'} €/L), "
+            f"votée au Parlement. La TVA de 20% s'applique sur le tout, y compris sur la TICPE elle-même."
+        ),
+    },
+]
+
+blocs_html = "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:0.5rem'>"
+for b in blocs:
+    blocs_html += (
+        f"<div style='border:1px solid #e5e7eb;border-radius:14px;padding:16px;"
+        f"border-top:3px solid {b[\"color\"]}'>"
+        f"<p style='font-size:0.875rem;font-weight:600;color:#111827;margin:0'>{b['titre']}</p>"
+        f"<p style='font-size:0.75rem;color:#9ca3af;margin:2px 0 10px'>{b['sous']}</p>"
+        f"<p style='font-size:0.875rem;color:#374151;line-height:1.55;margin:0'>{b['texte']}</p>"
+        f"</div>"
+    )
+blocs_html += "</div>"
+st.markdown(blocs_html, unsafe_allow_html=True)
+
+st.divider()
+
 # ─── HISTORIQUE ──────────────────────────────────────────────────────────────
 
 st.subheader("Évolution depuis 2015")
