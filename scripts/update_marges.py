@@ -35,8 +35,7 @@ PRIX_URL     = "https://donnees.roulez-eco.fr/opendata/instantane"
 PRIX_GOV_URL = (
     "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
     "prix-des-carburants-en-france-flux-instantane-v2/records"
-    "?select=gazole_prix,e10_prix,sp98_prix,type_de_vente"
-    "&limit=100"
+    "?limit=5"
 )
 
 HEADERS = {"User-Agent": "data-carburant-bot/1.0 (https://github.com/NicolasBrnd/transparence-carburant-streamlit)"}
@@ -88,7 +87,13 @@ def _parse_zip_xml(content: bytes) -> dict:
                 except Exception:
                     pass
 
+    # Debug : affiche les 5 premières valeurs brutes pour diagnostiquer le format
+    sample = []
+    for station in root.findall("pdv")[:3]:
+        for el in station.findall("prix"):
+            sample.append((el.get("nom"), el.get("valeur")))
     print(f"  {n_stations} stations, noms trouvés: {sorted(noms_bruts)}")
+    print(f"  Exemples valeurs brutes: {sample[:8]}")
     return {k: round(sum(v) / len(v), 6) for k, v in prix.items() if v}
 
 
@@ -100,27 +105,10 @@ def _fetch_via_gov_api() -> dict:
     records = r.json().get("results", [])
     print(f"  {len(records)} enregistrements reçus")
     if records:
+        print(f"  Champs disponibles: {list(records[0].keys())}")
         print(f"  Exemple de record: {records[0]}")
-
-    gazole, e10, sp98 = [], [], []
-    for rec in records:
-        if rec.get("type_de_vente") == "A":
-            continue
-        for lst, key in [(gazole, "gazole_prix"), (e10, "e10_prix"), (sp98, "sp98_prix")]:
-            val = rec.get(key)
-            if val is not None:
-                try:
-                    p = float(val)
-                    if 0.8 <= p <= 4.0:
-                        lst.append(p)
-                except Exception:
-                    pass
-
-    prix = {}
-    if gazole:   prix["Gazole"]   = round(sum(gazole) / len(gazole), 6)
-    if e10:      prix["SP95-E10"] = round(sum(e10)    / len(e10),    6)
-    if sp98:     prix["SP98"]     = round(sum(sp98)   / len(sp98),   6)
-    return prix
+    # Résultat vide pour cette passe de diagnostic — on lèvera une erreur explicite
+    raise ValueError("Diagnostic gov API — voir les champs ci-dessus, relancer après correction")
 
 
 def fetch_prix_pompe() -> dict:
