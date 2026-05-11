@@ -191,7 +191,9 @@ def fetch_raffinage() -> float:
     mois_prec = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
     val = resultats.get(mois) or resultats.get(mois_prec)
     if val is None:
-        raise ValueError("Marge raffinage introuvable dans le fichier DGEC")
+        dernier = sorted(resultats)[-1]
+        val = resultats[dernier]
+        print(f"  DGEC : mois courant absent, utilisation de {dernier} ({val:.4f} €/L)")
     return val
 
 
